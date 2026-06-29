@@ -5,26 +5,104 @@ const intentInput = document.querySelector("#intent");
 const qrTarget = document.querySelector("#qr");
 const statusTarget = document.querySelector("#status");
 const versionTarget = document.querySelector("#version");
+const warningsTarget = document.querySelector("#warnings");
 const payeeTarget = document.querySelector("#payee");
 const amountTarget = document.querySelector("#amount");
 const referenceTarget = document.querySelector("#reference");
 const downloadLink = document.querySelector("#download");
 const openLink = document.querySelector("#open-upi");
+const form = document.querySelector("#intent-form");
+const formFields = Array.from(form.elements).filter((element) => element.name);
+const formParamNames = formFields.map((element) => element.name);
+const dynamicModes = new Set(["15", "16", "17", "18", "22", "23", "24"]);
+const supportedModes = new Set(["01", "02", "04", "05", "06", "07", "08", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24"]);
+const knownParams = new Set([
+  "ver",
+  "mode",
+  "purpose",
+  "orgid",
+  "tid",
+  "tr",
+  "tn",
+  "category",
+  "url",
+  "pa",
+  "pn",
+  "mc",
+  "am",
+  "mam",
+  "cu",
+  "mid",
+  "msid",
+  "mtid",
+  "mType",
+  "mGr",
+  "mOnboarding",
+  "mLoc",
+  "brand",
+  "cc",
+  "enTips",
+  "gstBrkUp",
+  "bAm",
+  "bCurr",
+  "qrMedium",
+  "invoiceNo",
+  "invoiceDate",
+  "invoiceName",
+  "QRexpire",
+  "QRts",
+  "split",
+  "pinCode",
+  "Tier",
+  "gstIn",
+  "sign",
+  "query",
+]);
+
+let isSyncing = false;
+let extraParams = [];
 
 const params = new URLSearchParams(window.location.search);
 intentInput.value = normalizeIntent(params.get("upi") || params.get("url") || sampleIntent);
+syncFormFromIntent(intentInput.value);
 
-document.querySelector("#render").addEventListener("click", render);
+document.querySelector("#render").addEventListener("click", () => {
+  syncFormFromIntent(intentInput.value);
+  render();
+});
 document.querySelector("#copy-upi").addEventListener("click", () => copyText(normalizeIntent(intentInput.value), "UPI URL copied"));
 document.querySelector("#copy-page").addEventListener("click", () => copyText(makePageLink(), "Page link copied"));
-intentInput.addEventListener("input", render);
+intentInput.addEventListener("input", () => {
+  if (isSyncing) {
+    return;
+  }
+  syncFormFromIntent(intentInput.value);
+  render();
+});
+form.addEventListener("input", () => {
+  if (isSyncing) {
+    return;
+  }
+  syncIntentFromForm();
+  render();
+});
+form.addEventListener("change", () => {
+  if (isSyncing) {
+    return;
+  }
+  syncIntentFromForm();
+  render();
+});
 
 function render() {
   const value = normalizeIntent(intentInput.value);
   intentInput.value = value;
 
   try {
-    validateIntent(value);
+    if (!value) {
+      throw new Error("Add a UPI intent URL");
+    }
+    const warnings = validateIntent(value);
     const qr = QrCode.encode(value);
     const svg = qrToSvg(qr.modules);
     const dataUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
@@ -34,13 +112,15 @@ function render() {
     openLink.href = value;
     versionTarget.textContent = `QR v${qr.version}, ${qr.modules.length}x${qr.modules.length}`;
     statusTarget.className = "";
-    statusTarget.textContent = "Ready";
+    statusTarget.textContent = warnings.length ? "Ready with warnings" : "Ready";
+    renderWarnings(warnings);
     updateDetails(value);
     updateAddressBar(value);
   } catch (error) {
     statusTarget.className = "error";
     statusTarget.textContent = error.message;
     versionTarget.textContent = "";
+    renderWarnings([]);
   }
 }
 
@@ -52,23 +132,189 @@ function normalizeIntent(value) {
 }
 
 function validateIntent(value) {
-  if (!value) {
-    throw new Error("Add a UPI intent URL");
-  }
+  const warnings = [];
   if (!/^upi:\/\/pay\?/i.test(value)) {
-    throw new Error("Expected upi://pay?... URL");
+    warnings.push("Intent should start with upi://pay? for UPI QR/intent payments.");
   }
+  if (/\s/.test(value)) {
+    warnings.push("Spaces should be percent-encoded as %20 in UPI intent URLs.");
+  }
+
+  const intentParams = getIntentParams(value);
+  const get = (name) => normalizeNullValue(intentParams.get(name));
+  const pa = get("pa");
+  const pn = get("pn");
+  const am = get("am");
+  const mam = get("mam");
+  const cu = get("cu");
+  const mc = get("mc");
+  const mode = get("mode");
+  const tr = get("tr");
+  const tn = get("tn");
+  const url = get("url");
+
+  for (const [name, rawValue] of intentParams.entries()) {
+    if (/^null$/i.test(String(rawValue).trim())) {
+      warnings.push(`${name} has literal "null"; spec says null values should be treated as absent.`);
+    }
+    if (!knownParams.has(name)) {
+      warnings.push(`${name} is not in this tool's UPI Linking V12 parameter set; it will still be preserved.`);
+    }
+  }
+
+  if (!pa) {
+    warnings.push("pa is mandatory: payee UPI ID is missing.");
+  } else {
+    if (pa.length > 255) {
+      warnings.push("pa should be at most 255 characters.");
+    }
+    if (!/^[A-Za-z0-9._-]{2,256}@[A-Za-z0-9._-]{2,64}$/.test(pa)) {
+      warnings.push("pa does not look like a standard UPI VPA such as merchant@bank.");
+    }
+  }
+
+  if (!pn) {
+    warnings.push("pn is mandatory: payee name is missing.");
+  } else if (pn.length > 99) {
+    warnings.push("pn should be at most 99 characters.");
+  }
+
+  if (!mode) {
+    warnings.push("mode is absent; intent links commonly use 04 or 05.");
+  } else if (!supportedModes.has(mode)) {
+    warnings.push("mode should be one of the UPI Linking V12 mode codes.");
+  }
+
+  if (!mc) {
+    warnings.push("mc is absent; merchant-presented QR should include a 4-digit MCC.");
+  } else if (!/^\d{4}$/.test(mc)) {
+    warnings.push("mc should be exactly 4 numeric digits.");
+  } else if (mc === "0000") {
+    warnings.push("mc=0000 is for person-presented QR; merchant-presented QR should use a non-zero MCC.");
+  }
+
+  if (dynamicModes.has(mode) && !am) {
+    warnings.push("am is mandatory for dynamic QR modes.");
+  }
+  if (am && !isAmount(am)) {
+    warnings.push("am should be a positive amount with up to two decimal places.");
+  }
+  if (mam && !isAmount(mam)) {
+    warnings.push("mam should be a positive minimum amount with up to two decimal places.");
+  }
+  if (am && mam && isAmount(am) && isAmount(mam) && Number(am) < Number(mam)) {
+    warnings.push("am should not be lower than mam; UPI can decline amounts below mam.");
+  }
+  if (am && !cu) {
+    warnings.push("cu should be present when am is present.");
+  }
+  if (cu && !/^[A-Za-z]{3}$/.test(cu)) {
+    warnings.push("cu should be a 3-letter currency code such as INR.");
+  }
+
+  if (tr && tr.length > 35) {
+    warnings.push("tr should be at most 35 characters.");
+  }
+  if (tn && tn.length > 50) {
+    warnings.push("tn should be at most 50 characters.");
+  }
+  if (url) {
+    if (url.length > 99) {
+      warnings.push("url should be at most 99 characters.");
+    }
+    if (!/^https?:\/\//i.test(url)) {
+      warnings.push("url should start with http:// or https://.");
+    }
+  }
+
+  return warnings;
 }
 
 function updateDetails(value) {
-  const query = value.slice(value.indexOf("?") + 1);
-  const intentParams = new URLSearchParams(query);
-  const amount = intentParams.get("am");
-  const currency = intentParams.get("cu") || "INR";
+  const intentParams = getIntentParams(value);
+  const amount = normalizeNullValue(intentParams.get("am"));
+  const currency = normalizeNullValue(intentParams.get("cu")) || "INR";
 
-  payeeTarget.textContent = intentParams.get("pn") || intentParams.get("pa") || "-";
+  payeeTarget.textContent = normalizeNullValue(intentParams.get("pn")) || normalizeNullValue(intentParams.get("pa")) || "-";
   amountTarget.textContent = amount ? `${currency} ${amount}` : "-";
-  referenceTarget.textContent = intentParams.get("tr") || intentParams.get("tn") || "-";
+  referenceTarget.textContent = normalizeNullValue(intentParams.get("tr")) || normalizeNullValue(intentParams.get("tn")) || "-";
+}
+
+function renderWarnings(warnings) {
+  if (!warnings.length) {
+    warningsTarget.className = "warnings";
+    warningsTarget.innerHTML = "";
+    return;
+  }
+
+  warningsTarget.className = "warnings visible";
+  warningsTarget.innerHTML = [
+    "<strong>Spec warnings</strong>",
+    `<ul>${warnings.map((warning) => `<li>${escapeHtml(warning)}</li>`).join("")}</ul>`,
+  ].join("");
+}
+
+function syncFormFromIntent(value) {
+  const intentParams = getIntentParams(normalizeIntent(value));
+
+  isSyncing = true;
+  for (const field of formFields) {
+    field.value = normalizeNullValue(intentParams.get(field.name));
+  }
+  extraParams = Array.from(intentParams.entries()).filter(([name]) => !formParamNames.includes(name));
+  isSyncing = false;
+}
+
+function syncIntentFromForm() {
+  isSyncing = true;
+  intentInput.value = buildIntentFromForm();
+  isSyncing = false;
+}
+
+function buildIntentFromForm() {
+  const values = formFields
+    .map((field) => [field.name, field.value.trim()])
+    .filter(([, value]) => value && !/^null$/i.test(value));
+  const formNames = new Set(values.map(([name]) => name));
+  const preserved = extraParams.filter(([name, value]) => !formNames.has(name) && normalizeNullValue(value));
+  const query = values.concat(preserved).map(([name, value]) => `${encodeUpiComponent(name)}=${encodeUpiComponent(value)}`).join("&");
+
+  return query ? `upi://pay?${query}` : "";
+}
+
+function getIntentParams(value) {
+  const questionIndex = value.indexOf("?");
+  if (questionIndex === -1) {
+    return new URLSearchParams();
+  }
+  return new URLSearchParams(value.slice(questionIndex + 1));
+}
+
+function normalizeNullValue(value) {
+  const normalized = String(value || "").trim();
+  return /^null$/i.test(normalized) ? "" : normalized;
+}
+
+function isAmount(value) {
+  return /^(?:0|[1-9]\d*)(?:\.\d{1,2})?$/.test(value) && Number(value) > 0;
+}
+
+function encodeUpiComponent(value) {
+  return encodeURIComponent(value)
+    .replace(/%20/g, "%20")
+    .replace(/%40/g, "@")
+    .replace(/%3A/gi, ":")
+    .replace(/%2F/gi, "/");
+}
+
+function escapeHtml(value) {
+  return value.replace(/[&<>"']/g, (character) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  }[character]));
 }
 
 function makePageLink() {

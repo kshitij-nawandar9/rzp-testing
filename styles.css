@@ -34,6 +34,8 @@ body {
 }
 
 button,
+input,
+select,
 textarea,
 a {
   font: inherit;
@@ -196,7 +198,7 @@ dt {
 
 textarea {
   width: 100%;
-  min-height: 238px;
+  min-height: 146px;
   margin-top: 10px;
   resize: vertical;
   border: 1px solid var(--line);
@@ -212,6 +214,105 @@ textarea {
 textarea:focus {
   border-color: var(--blue);
   box-shadow: 0 0 0 4px rgba(47, 114, 226, 0.14), inset 0 1px 0 rgba(6, 27, 58, 0.03);
+}
+
+.intent-form {
+  margin-top: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+  background: #f8fbff;
+}
+
+.form-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.form-header span:first-child {
+  color: var(--navy);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.form-header span:last-child {
+  color: var(--faint);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.field-grid label {
+  display: grid;
+  gap: 6px;
+}
+
+.field-grid span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+input,
+select {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: var(--ink);
+  background: #fff;
+  font-size: 13px;
+  font-weight: 750;
+  outline: none;
+}
+
+input:focus,
+select:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 4px rgba(47, 114, 226, 0.12);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--faint);
+  font-weight: 650;
+}
+
+.warnings {
+  display: none;
+  margin-top: 14px;
+  border: 1px solid #f0d6a8;
+  border-radius: 8px;
+  padding: 12px 14px;
+  color: #71470b;
+  background: #fff8e8;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+.warnings.visible {
+  display: block;
+}
+
+.warnings ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+.warnings li + li {
+  margin-top: 4px;
 }
 
 .actions {
@@ -481,6 +582,14 @@ dd {
 
   .version {
     justify-self: start;
+  }
+
+  .form-header {
+    display: grid;
+  }
+
+  .field-grid {
+    grid-template-columns: 1fr;
   }
 
   .qr {

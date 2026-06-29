@@ -33,6 +33,67 @@
           <label for="intent">Intent URL</label>
           <textarea id="intent" spellcheck="false" rows="8"></textarea>
 
+          <form id="intent-form" class="intent-form" novalidate>
+            <div class="form-header">
+              <span>Build from fields</span>
+              <span>Auto-syncs with the intent URL</span>
+            </div>
+            <div class="field-grid">
+              <label>
+                <span>Payee VPA</span>
+                <input id="field-pa" name="pa" autocomplete="off" placeholder="merchant@bank">
+              </label>
+              <label>
+                <span>Payee name</span>
+                <input id="field-pn" name="pn" autocomplete="off" placeholder="Merchant name">
+              </label>
+              <label>
+                <span>Amount</span>
+                <input id="field-am" name="am" inputmode="decimal" autocomplete="off" placeholder="100.00">
+              </label>
+              <label>
+                <span>Currency</span>
+                <input id="field-cu" name="cu" autocomplete="off" maxlength="3" placeholder="INR">
+              </label>
+              <label>
+                <span>MCC</span>
+                <input id="field-mc" name="mc" inputmode="numeric" autocomplete="off" maxlength="4" placeholder="5411">
+              </label>
+              <label>
+                <span>Mode</span>
+                <select id="field-mode" name="mode">
+                  <option value="">Not set</option>
+                  <option value="04">04 - Intent</option>
+                  <option value="05">05 - Secure intent</option>
+                  <option value="01">01 - Static QR</option>
+                  <option value="02">02 - Static secure QR</option>
+                  <option value="15">15 - Dynamic QR</option>
+                  <option value="16">16 - Dynamic secure QR</option>
+                  <option value="22">22 - Online dynamic QR</option>
+                  <option value="23">23 - Online dynamic secure QR</option>
+                </select>
+              </label>
+              <label>
+                <span>Reference</span>
+                <input id="field-tr" name="tr" autocomplete="off" placeholder="Order or bill id">
+              </label>
+              <label>
+                <span>Note</span>
+                <input id="field-tn" name="tn" autocomplete="off" placeholder="Transaction note">
+              </label>
+              <label>
+                <span>Minimum amount</span>
+                <input id="field-mam" name="mam" inputmode="decimal" autocomplete="off" placeholder="Optional">
+              </label>
+              <label>
+                <span>Invoice URL</span>
+                <input id="field-url" name="url" autocomplete="off" placeholder="https://example.com/invoice">
+              </label>
+            </div>
+          </form>
+
+          <div id="warnings" class="warnings" aria-live="polite"></div>
+
           <div class="actions">
             <button id="render" class="button primary-action" type="button">
               <span class="button-icon scan-icon" aria-hidden="true"></span>

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>UPI QR</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <section class="workspace" aria-labelledby="title">
+        <div class="editor">
+          <p class="eyebrow">UPI intent</p>
+          <h1 id="title">UPI QR</h1>
+
+          <label for="intent">Intent URL</label>
+          <textarea id="intent" spellcheck="false" rows="8"></textarea>
+
+          <div class="actions">
+            <button id="render" type="button">Render QR</button>
+            <button id="copy-upi" type="button">Copy UPI URL</button>
+            <button id="copy-page" type="button">Copy page link</button>
+          </div>
+
+          <div class="meta" aria-live="polite">
+            <span id="status">Ready</span>
+            <span id="version"></span>
+          </div>
+        </div>
+
+        <aside class="preview" aria-label="Generated QR">
+          <div id="qr" class="qr" role="img" aria-label="QR code for UPI intent"></div>
+          <dl class="details">
+            <div>
+              <dt>Payee</dt>
+              <dd id="payee">-</dd>
+            </div>
+            <div>
+              <dt>Amount</dt>
+              <dd id="amount">-</dd>
+            </div>
+            <div>
+              <dt>Reference</dt>
+              <dd id="reference">-</dd>
+            </div>
+          </dl>
+          <div class="actions preview-actions">
+            <a id="download" class="button secondary" download="upi-qr.svg" href="#">Download SVG</a>
+            <a id="open-upi" class="button primary" href="#">Open UPI</a>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

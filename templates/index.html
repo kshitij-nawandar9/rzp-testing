@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Razorpay Test App</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --navy: #072654;
+            --blue: #528FF0;
+            --blue-hover: #3d7ae0;
+            --blue-light: #e8f1fd;
+            --blue-subtle: #f0f6ff;
+            --text: #1b2733;
+            --text-secondary: #5f6d7e;
+            --text-muted: #8a94a6;
+            --border: #e1e5eb;
+            --bg: #f4f6f9;
+            --card: #ffffff;
+            --green: #1ea672;
+            --green-bg: #e6f7ef;
+            --red: #e2423a;
+            --red-bg: #fde8e8;
+            --code-bg: #0a1628;
+            --code-fg: #7dd3a8;
+            --code-err: #f87171;
+            --radius: 8px;
+            --radius-lg: 12px;
+            --shadow-sm: 0 1px 2px rgba(7,38,84,0.06);
+            --shadow: 0 1px 3px rgba(7,38,84,0.08), 0 1px 2px rgba(7,38,84,0.04);
+            --shadow-md: 0 4px 12px rgba(7,38,84,0.08), 0 1px 3px rgba(7,38,84,0.06);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+
+        /* Header */
+        .header { background: var(--navy); color: white; padding: 0 32px; height: 60px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(7,38,84,0.2); position: sticky; top: 0; z-index: 100; }
+        .header h1 { font-size: 18px; font-weight: 600; display: flex; align-items: center; gap: 10px; letter-spacing: -0.01em; }
+        .header-right { display: flex; align-items: center; gap: 20px; }
+
+        /* Status */
+        .status { display: flex; align-items: center; gap: 8px; font-size: 13px; color: rgba(255,255,255,0.8); }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .status-dot.ok { background: var(--green); box-shadow: 0 0 6px rgba(30,166,114,0.5); }
+        .status-dot.err { background: var(--red); box-shadow: 0 0 6px rgba(226,66,58,0.5); }
+
+        /* Mode toggle */
+        .mode-toggle { display: flex; align-items: center; background: rgba(255,255,255,0.08); border-radius: 6px; padding: 2px; }
+        .mode-toggle label { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.5); cursor: pointer; padding: 5px 14px; border-radius: 4px; transition: all 0.2s; user-select: none; letter-spacing: 0.02em; }
+        .mode-toggle label:hover { color: rgba(255,255,255,0.8); }
+        .mode-toggle label.active { color: #fff; }
+        .mode-toggle label.active.mode-test { background: var(--green); }
+        .mode-toggle label.active.mode-prod { background: var(--red); }
+
+        /* Mode badge */
+        .mode-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; padding: 3px 8px; border-radius: 4px; }
+        .mode-badge.test { background: var(--green); color: #fff; }
+        .mode-badge.prod { background: var(--red); color: #fff; }
+
+        /* Container */
+        .container { max-width: 960px; margin: 0 auto; padding: 28px 24px; }
+
+        /* Tabs */
+        .tabs { display: flex; gap: 0; margin-bottom: 28px; border-bottom: 1px solid var(--border); }
+        .tab { padding: 12px 20px; cursor: pointer; border: none; background: none; font-family: inherit; font-size: 14px; font-weight: 500; color: var(--text-muted); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.2s; }
+        .tab:hover { color: var(--text-secondary); }
+        .tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+        /* Panels */
+        .panel { display: none; }
+        .panel.active { display: block; }
+
+        /* Cards */
+        .card { background: var(--card); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 16px; box-shadow: var(--shadow); border: 1px solid var(--border); }
+        .card h3 { font-size: 15px; font-weight: 600; margin-bottom: 16px; color: var(--navy); display: flex; align-items: center; gap: 8px; }
+
+        /* Forms */
+        .form-row { display: flex; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+        .form-group { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 160px; }
+        .form-group label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; }
+        input, select { padding: 9px 12px; border: 1px solid var(--border); border-radius: var(--radius); font-family: inherit; font-size: 14px; color: var(--text); transition: all 0.2s; background: #fff; }
+        input:hover, select:hover { border-color: #c5ccd6; }
+        input:focus, select:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(82,143,240,0.15); }
+        input::placeholder { color: var(--text-muted); }
+
+        /* Buttons */
+        button { padding: 9px 18px; border: none; border-radius: var(--radius); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; letter-spacing: 0.01em; }
+        .btn-primary { background: var(--blue); color: white; box-shadow: var(--shadow-sm); }
+        .btn-primary:hover { background: var(--blue-hover); box-shadow: var(--shadow); transform: translateY(-1px); }
+        .btn-primary:active { transform: translateY(0); }
+        .btn-danger { background: var(--red); color: white; box-shadow: var(--shadow-sm); }
+        .btn-danger:hover { background: #cc3630; box-shadow: var(--shadow); transform: translateY(-1px); }
+        .btn-secondary { background: white; color: var(--text-secondary); border: 1px solid var(--border); }
+        .btn-secondary:hover { background: var(--bg); border-color: #c5ccd6; }
+
+        /* Result box */
+        .result-box { margin-top: 16px; background: var(--code-bg); color: var(--code-fg); border-radius: var(--radius); padding: 16px; font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace; font-size: 12px; white-space: pre-wrap; word-break: break-all; max-height: 400px; overflow-y: auto; display: none; border: 1px solid rgba(82,143,240,0.15); }
+        .result-box.visible { display: block; }
+        .result-box .error { color: var(--code-err); }
+
+        /* QR display */
+        .qr-image { margin-top: 16px; text-align: center; }
+        .qr-image img { max-width: 220px; border: 2px solid var(--border); border-radius: var(--radius-lg); padding: 8px; background: #fff; }
+        .vpa-display { margin-top: 10px; text-align: center; font-size: 13px; color: var(--text-secondary); }
+        .vpa-display code { background: var(--blue-light); padding: 4px 10px; border-radius: 4px; font-weight: 600; color: var(--blue); font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+
+        /* Webhooks */
+        .webhook-list { max-height: 500px; overflow-y: auto; }
+        .webhook-entry { border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 10px; overflow: hidden; }
+        .webhook-header { padding: 12px 16px; background: var(--blue-subtle); display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background 0.15s; }
+        .webhook-header:hover { background: var(--blue-light); }
+        .webhook-event { font-weight: 600; color: var(--blue); font-size: 13px; }
+        .webhook-time { font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+        .webhook-body { padding: 14px 16px; background: var(--code-bg); color: var(--code-fg); font-family: 'JetBrains Mono', monospace; font-size: 12px; white-space: pre-wrap; display: none; max-height: 300px; overflow-y: auto; }
+        .webhook-body.open { display: block; }
+
+        /* Misc */
+        .empty-state { text-align: center; padding: 48px 24px; color: var(--text-muted); font-size: 14px; }
+        .hint { font-size: 12px; color: var(--text-muted); margin-top: 6px; line-height: 1.6; }
+        .hint code { background: var(--blue-light); padding: 2px 6px; border-radius: 3px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--navy); }
+        .loading { display: none; color: var(--blue); font-size: 13px; margin-top: 10px; font-weight: 500; }
+        .loading.visible { display: block; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(7,38,84,0.15); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(7,38,84,0.25); }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Razorpay Test App <span id="mode-badge" class="mode-badge {{.Mode}}">{{.Mode}}</span></h1>
+        <div class="header-right">
+            <div class="mode-toggle">
+                <label id="mode-label-test" class="mode-test {{if eq .Mode "test"}}active{{end}}" onclick="switchMode('test')">Test</label>
+                <label id="mode-label-prod" class="mode-prod {{if eq .Mode "prod"}}active{{end}}" onclick="switchMode('prod')">Prod</label>
+            </div>
+            <div class="status">
+                {{if .Connected}}
+                    <span class="status-dot ok"></span>
+                    <span id="key-display">{{.KeyID}}</span>
+                {{else}}
+                    <span class="status-dot err"></span>
+                    <span>Not connected</span>
+                {{end}}
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('orders')">Orders & Payments</button>
+            <button class="tab" onclick="switchTab('qr')">QR Codes</button>
+            <button class="tab" onclick="switchTab('webhooks')">Webhooks</button>
+        </div>
+
+        <!-- ORDERS & PAYMENTS -->
+        <div id="panel-orders" class="panel active">
+            <div class="card">
+                <h3>Create Order</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Amount (paise)</label>
+                        <input type="number" id="order-amount" value="100" placeholder="e.g. 100 = ₹1">
+                    </div>
+                    <div class="form-group">
+                        <label>Currency</label>
+                        <select id="order-currency">
+                            <option value="INR">INR</option>
+                            <option value="USD">USD</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Receipt</label>
+                        <input type="text" id="order-receipt" value="rcpt_test_1" placeholder="receipt_id">
+                    </div>
+                </div>
+                <button class="btn-primary" onclick="createOrder()">Create Order</button>
+                <div class="hint">Amount is in smallest currency unit (paise for INR). 100 = ₹1</div>
+                <div id="create-order-loading" class="loading">Creating order...</div>
+                <div id="create-order-result" class="result-box"></div>
+            </div>
+
+            <div class="card">
+                <h3>Pay with Razorpay Checkout</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Amount (paise)</label>
+                        <input type="number" id="pay-amount" value="100" placeholder="e.g. 100 = ₹1">
+                    </div>
+                    <div class="form-group">
+                        <label>Order ID (optional)</label>
+                        <input type="text" id="pay-order-id" placeholder="order_xxxxxxxxxxxxx">
+                    </div>
+                </div>
+                <button class="btn-primary" onclick="openCheckout()">Open Checkout</button>
+                <div class="hint">Use test card <code>4111 1111 1111 1111</code> or UPI ID <code>success@razorpay</code>. Leave Order ID blank for standalone payment.</div>
+                <div id="pay-result" class="result-box"></div>
+            </div>
+
+            <div class="card">
+                <h3>Fetch Order</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Order ID</label>
+                        <input type="text" id="fetch-order-id" placeholder="order_xxxxxxxxxxxxx">
+                    </div>
+                </div>
+                <button class="btn-primary" onclick="fetchOrder()">Fetch Order</button>
+                <button class="btn-secondary" onclick="fetchOrderPayments()" style="margin-left:8px">Fetch Payments</button>
+                <div id="fetch-order-loading" class="loading">Fetching...</div>
+                <div id="fetch-order-result" class="result-box"></div>
+            </div>
+
+            <div class="card">
+                <h3>Fetch Payment</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Payment ID</label>
+                        <input type="text" id="fetch-payment-id" placeholder="pay_xxxxxxxxxxxxx">
+                    </div>
+                </div>
+                <button class="btn-primary" onclick="fetchPayment()">Fetch Payment</button>
+                <div id="fetch-payment-loading" class="loading">Fetching...</div>
+                <div id="fetch-payment-result" class="result-box"></div>
+            </div>
+
+            <div class="card">
+                <h3>Capture Payment</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Payment ID</label>
+                        <input type="text" id="capture-payment-id" placeholder="pay_xxxxxxxxxxxxx">
+                    </div>
+                    <div class="form-group">
+                        <label>Amount (paise)</label>
+                        <input type="number" id="capture-amount" placeholder="50000">
+                    </div>
+                    <div class="form-group">
+                        <label>Currency</label>
+                        <select id="capture-currency">
+                            <option value="INR">INR</option>
+                            <option value="USD">USD</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn-primary" onclick="capturePayment()">Capture Payment</button>
+                <div id="capture-payment-loading" class="loading">Capturing...</div>
+                <div id="capture-payment-result" class="result-box"></div>
+            </div>
+
+            <div class="card">
+                <h3>Refund Payment</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Payment ID</label>
+                        <input type="text" id="refund-payment-id" placeholder="pay_xxxxxxxxxxxxx">
+                    </div>
+                    <div class="form-group">
+                        <label>Amount (paise)</label>
+                        <input type="number" id="refund-amount" placeholder="50000">
+                    </div>
+                </div>
+                <button class="btn-danger" onclick="refundPayment()">Refund Payment</button>
+                <div id="refund-payment-loading" class="loading">Refunding...</div>
+                <div id="refund-payment-result" class="result-box"></div>
+            </div>
+        </div>
+
+        <!-- QR CODES -->
+        <div id="panel-qr" class="panel">
+            <div class="card">
+                <h3>Create QR Code</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Type</label>
+                        <select id="qr-type">
+                            <option value="upi_qr">UPI QR</option>
+                            <option value="bharat_qr">Bharat QR</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Usage</label>
+                        <select id="qr-usage">
+                            <option value="single_use">Single Use</option>
+                            <option value="multiple_use">Multiple Use</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Amount (paise)</label>
+                        <input type="number" id="qr-amount" value="100" placeholder="e.g. 100 = ₹1">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Description</label>
+                        <input type="text" id="qr-description" value="Test QR Payment" placeholder="Payment description">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Customer Name</label>
+                        <input type="text" id="qr-cust-name" placeholder="Optional">
+                    </div>
+                    <div class="form-group">
+                        <label>Customer Email</label>
+                        <input type="email" id="qr-cust-email" placeholder="Optional">
+                    </div>
+                    <div class="form-group">
+                        <label>Customer Contact</label>
+                        <input type="text" id="qr-cust-contact" placeholder="Optional">
+                    </div>
+                </div>
+                <button class="btn-primary" onclick="createQR()">Create QR Code</button>
+                <div id="create-qr-loading" class="loading">Creating QR code...</div>
+                <div id="qr-image-display" class="qr-image" style="display:none">
+                    <img id="qr-image" src="" alt="QR Code">
+                    <div class="vpa-display">VPA: <code id="qr-vpa"></code></div>
+                </div>
+                <div id="create-qr-result" class="result-box"></div>
+            </div>
+
+            <div class="card">
+                <h3>Fetch QR Code</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>QR Code ID</label>
+                        <input type="text" id="fetch-qr-id" placeholder="qr_xxxxxxxxxxxxx">
+                    </div>
+                </div>
+                <button class="btn-primary" onclick="fetchQR()">Fetch QR Code</button>
+                <div id="fetch-qr-loading" class="loading">Fetching...</div>
+                <div id="fetch-qr-image-display" class="qr-image" style="display:none">
+                    <img id="fetch-qr-image" src="" alt="QR Code">
+                    <div class="vpa-display">VPA: <code id="fetch-qr-vpa"></code></div>
+                </div>
+                <div id="fetch-qr-result" class="result-box"></div>
+            </div>
+
+            <div class="card">
+                <h3>Close QR Code</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>QR Code ID</label>
+                        <input type="text" id="close-qr-id" placeholder="qr_xxxxxxxxxxxxx">
+                    </div>
+                </div>
+                <button class="btn-danger" onclick="closeQR()">Close QR Code</button>
+                <div id="close-qr-loading" class="loading">Closing...</div>
+                <div id="close-qr-result" class="result-box"></div>
+            </div>
+
+            <div class="card">
+                <h3>Recent QR Codes</h3>
+                <button class="btn-primary" onclick="listQR()">List QR Codes</button>
+                <div id="list-qr-loading" class="loading">Fetching...</div>
+                <div id="list-qr-result" class="result-box"></div>
+            </div>
+        </div>
+
+        <!-- WEBHOOKS -->
+        <div id="panel-webhooks" class="panel">
+            <div class="card">
+                <h3>Webhook Log</h3>
+                <p class="hint" style="margin-bottom:16px">
+                    Endpoint: <code>POST /webhook</code> — Point your Razorpay webhook URL here. Use ngrok to expose this locally.
+                    Set <code>RZP_WEBHOOK_SECRET</code> env var for signature verification.
+                </p>
+                <button class="btn-secondary" onclick="location.reload()">Refresh</button>
+                <div class="webhook-list" style="margin-top:16px">
+                    {{if .Webhooks}}
+                        {{range $i, $w := .Webhooks}}
+                        <div class="webhook-entry">
+                            <div class="webhook-header" onclick="this.nextElementSibling.classList.toggle('open')">
+                                <span class="webhook-event">{{$w.Event}}</span>
+                                <span class="webhook-time">{{$w.Timestamp}}</span>
+                            </div>
+                            <div class="webhook-body">{{$w.Body}}</div>
+                        </div>
+                        {{end}}
+                    {{else}}
+                        <div class="empty-state">No webhooks received yet. Configure your Razorpay webhook URL to point here.</div>
+                    {{end}}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+        let RZP_KEY_ID = '{{.KeyID}}';
+        let currentMode = '{{.Mode}}';
+
+        async function switchMode(mode) {
+            if (mode === currentMode) return;
+            const form = new URLSearchParams();
+            form.append('mode', mode);
+            try {
+                const resp = await fetch('/api/mode', { method: 'POST', body: form });
+                const data = await resp.json();
+                if (!resp.ok) {
+                    alert('Switch failed: ' + (data.error || 'unknown error'));
+                    return;
+                }
+                currentMode = data.mode;
+                RZP_KEY_ID = data.key_id;
+                document.getElementById('key-display').textContent = data.key_id;
+                const badge = document.getElementById('mode-badge');
+                badge.textContent = data.mode;
+                badge.className = 'mode-badge ' + data.mode;
+                document.querySelectorAll('.mode-toggle label').forEach(l => l.classList.remove('active'));
+                document.getElementById('mode-label-' + data.mode).classList.add('active');
+            } catch (e) {
+                alert('Switch failed: ' + e.message);
+            }
+        }
+
+        function switchTab(name) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('panel-' + name).classList.add('active');
+        }
+
+        function showResult(id, data, isError) {
+            const el = document.getElementById(id);
+            el.classList.add('visible');
+            if (isError) {
+                el.innerHTML = '<span class="error">' + escapeHtml(typeof data === 'string' ? data : JSON.stringify(data, null, 2)) + '</span>';
+            } else {
+                el.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+            }
+        }
+
+        function showLoading(id, show) {
+            document.getElementById(id).classList.toggle('visible', show);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function apiCall(url, options = {}) {
+            const resp = await fetch(url, options);
+            const data = await resp.json();
+            return { data, ok: resp.ok };
+        }
+
+        // Orders
+        async function createOrder() {
+            showLoading('create-order-loading', true);
+            try {
+                const form = new URLSearchParams();
+                form.append('amount', document.getElementById('order-amount').value);
+                form.append('currency', document.getElementById('order-currency').value);
+                form.append('receipt', document.getElementById('order-receipt').value);
+                const { data, ok } = await apiCall('/api/orders/create', { method: 'POST', body: form });
+                showResult('create-order-result', data, !ok);
+            } catch (e) {
+                showResult('create-order-result', e.message, true);
+            }
+            showLoading('create-order-loading', false);
+        }
+
+        async function fetchOrder() {
+            showLoading('fetch-order-loading', true);
+            try {
+                const id = document.getElementById('fetch-order-id').value;
+                const { data, ok } = await apiCall('/api/orders/fetch?order_id=' + encodeURIComponent(id));
+                showResult('fetch-order-result', data, !ok);
+            } catch (e) {
+                showResult('fetch-order-result', e.message, true);
+            }
+            showLoading('fetch-order-loading', false);
+        }
+
+        async function fetchOrderPayments() {
+            showLoading('fetch-order-loading', true);
+            try {
+                const id = document.getElementById('fetch-order-id').value;
+                const { data, ok } = await apiCall('/api/orders/payments?order_id=' + encodeURIComponent(id));
+                showResult('fetch-order-result', data, !ok);
+            } catch (e) {
+                showResult('fetch-order-result', e.message, true);
+            }
+            showLoading('fetch-order-loading', false);
+        }
+
+        // Pay via Checkout (order_id optional)
+        function openCheckout() {
+            const amount = document.getElementById('pay-amount').value;
+            const orderID = document.getElementById('pay-order-id').value.trim();
+            if (!amount) {
+                showResult('pay-result', 'Amount is required', true);
+                return;
+            }
+            const options = {
+                key: RZP_KEY_ID,
+                amount: amount,
+                currency: 'INR',
+                name: 'Razorpay Test App',
+                description: 'Test Payment',
+                handler: function(response) {
+                    const result = {
+                        message: 'Payment successful!',
+                        razorpay_payment_id: response.razorpay_payment_id
+                    };
+                    if (response.razorpay_order_id) result.razorpay_order_id = response.razorpay_order_id;
+                    if (response.razorpay_signature) result.razorpay_signature = response.razorpay_signature;
+                    showResult('pay-result', result, false);
+                },
+                modal: {
+                    ondismiss: function() {
+                        showResult('pay-result', 'Payment cancelled by user', true);
+                    }
+                },
+                prefill: {
+                    email: 'test@example.com',
+                    contact: '9999999999'
+                },
+                theme: { color: '#1a73e8' }
+            };
+            if (orderID) options.order_id = orderID;
+            const rzp = new Razorpay(options);
+            rzp.on('payment.failed', function(response) {
+                showResult('pay-result', {
+                    error: 'Payment failed',
+                    code: response.error.code,
+                    description: response.error.description,
+                    reason: response.error.reason
+                }, true);
+            });
+            rzp.open();
+        }
+
+        // Payments
+        async function fetchPayment() {
+            showLoading('fetch-payment-loading', true);
+            try {
+                const id = document.getElementById('fetch-payment-id').value;
+                const { data, ok } = await apiCall('/api/payments/fetch?payment_id=' + encodeURIComponent(id));
+                showResult('fetch-payment-result', data, !ok);
+            } catch (e) {
+                showResult('fetch-payment-result', e.message, true);
+            }
+            showLoading('fetch-payment-loading', false);
+        }
+
+        async function capturePayment() {
+            showLoading('capture-payment-loading', true);
+            try {
+                const form = new URLSearchParams();
+                form.append('payment_id', document.getElementById('capture-payment-id').value);
+                form.append('amount', document.getElementById('capture-amount').value);
+                form.append('currency', document.getElementById('capture-currency').value);
+                const { data, ok } = await apiCall('/api/payments/capture', { method: 'POST', body: form });
+                showResult('capture-payment-result', data, !ok);
+            } catch (e) {
+                showResult('capture-payment-result', e.message, true);
+            }
+            showLoading('capture-payment-loading', false);
+        }
+
+        async function refundPayment() {
+            showLoading('refund-payment-loading', true);
+            try {
+                const form = new URLSearchParams();
+                form.append('payment_id', document.getElementById('refund-payment-id').value);
+                form.append('amount', document.getElementById('refund-amount').value);
+                const { data, ok } = await apiCall('/api/payments/refund', { method: 'POST', body: form });
+                showResult('refund-payment-result', data, !ok);
+            } catch (e) {
+                showResult('refund-payment-result', e.message, true);
+            }
+            showLoading('refund-payment-loading', false);
+        }
+
+        // QR Codes
+        async function createQR() {
+            showLoading('create-qr-loading', true);
+            document.getElementById('qr-image-display').style.display = 'none';
+            try {
+                const form = new URLSearchParams();
+                form.append('type', document.getElementById('qr-type').value);
+                form.append('usage', document.getElementById('qr-usage').value);
+                form.append('payment_amount', document.getElementById('qr-amount').value);
+                form.append('description', document.getElementById('qr-description').value);
+                form.append('customer_name', document.getElementById('qr-cust-name').value);
+                form.append('customer_email', document.getElementById('qr-cust-email').value);
+                form.append('customer_contact', document.getElementById('qr-cust-contact').value);
+                const { data, ok } = await apiCall('/api/qr/create', { method: 'POST', body: form });
+                showResult('create-qr-result', data, !ok);
+                if (ok && data.image_url) {
+                    document.getElementById('qr-image').src = data.image_url;
+                    document.getElementById('qr-image-display').style.display = 'block';
+                    const vpa = data.customer_details?.customer_vpa || data.description || '-';
+                    document.getElementById('qr-vpa').textContent = vpa;
+                }
+            } catch (e) {
+                showResult('create-qr-result', e.message, true);
+            }
+            showLoading('create-qr-loading', false);
+        }
+
+        async function fetchQR() {
+            showLoading('fetch-qr-loading', true);
+            document.getElementById('fetch-qr-image-display').style.display = 'none';
+            try {
+                const id = document.getElementById('fetch-qr-id').value;
+                const { data, ok } = await apiCall('/api/qr/fetch?qr_id=' + encodeURIComponent(id));
+                showResult('fetch-qr-result', data, !ok);
+                if (ok && data.image_url) {
+                    document.getElementById('fetch-qr-image').src = data.image_url;
+                    document.getElementById('fetch-qr-image-display').style.display = 'block';
+                    const vpa = data.customer_details?.customer_vpa || data.description || '-';
+                    document.getElementById('fetch-qr-vpa').textContent = vpa;
+                }
+            } catch (e) {
+                showResult('fetch-qr-result', e.message, true);
+            }
+            showLoading('fetch-qr-loading', false);
+        }
+
+        async function closeQR() {
+            showLoading('close-qr-loading', true);
+            try {
+                const form = new URLSearchParams();
+                form.append('qr_id', document.getElementById('close-qr-id').value);
+                const { data, ok } = await apiCall('/api/qr/close', { method: 'POST', body: form });
+                showResult('close-qr-result', data, !ok);
+            } catch (e) {
+                showResult('close-qr-result', e.message, true);
+            }
+            showLoading('close-qr-loading', false);
+        }
+
+        async function listQR() {
+            showLoading('list-qr-loading', true);
+            try {
+                const { data, ok } = await apiCall('/api/qr/list');
+                showResult('list-qr-result', data, !ok);
+            } catch (e) {
+                showResult('list-qr-result', e.message, true);
+            }
+            showLoading('list-qr-loading', false);
+        }
+    </script>
+</body>
+</html>

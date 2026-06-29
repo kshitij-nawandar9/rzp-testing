@@ -9,28 +9,50 @@
   </head>
   <body>
     <main class="shell">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <span>RZP Testing</span>
+        </div>
+        <div class="status-pill" aria-live="polite">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span id="status">Ready</span>
+        </div>
+      </header>
+
       <section class="workspace" aria-labelledby="title">
         <div class="editor">
-          <p class="eyebrow">UPI intent</p>
-          <h1 id="title">UPI QR</h1>
+          <div class="title-row">
+            <div>
+              <p class="eyebrow">UPI intent</p>
+              <h1 id="title">UPI QR</h1>
+            </div>
+            <span id="version" class="version"></span>
+          </div>
 
           <label for="intent">Intent URL</label>
           <textarea id="intent" spellcheck="false" rows="8"></textarea>
 
           <div class="actions">
-            <button id="render" type="button">Render QR</button>
-            <button id="copy-upi" type="button">Copy UPI URL</button>
-            <button id="copy-page" type="button">Copy page link</button>
-          </div>
-
-          <div class="meta" aria-live="polite">
-            <span id="status">Ready</span>
-            <span id="version"></span>
+            <button id="render" class="button primary-action" type="button">
+              <span class="button-icon scan-icon" aria-hidden="true"></span>
+              <span>Render</span>
+            </button>
+            <button id="copy-upi" class="button quiet-action" type="button">
+              <span class="button-icon copy-icon" aria-hidden="true"></span>
+              <span>Copy URL</span>
+            </button>
+            <button id="copy-page" class="button quiet-action" type="button">
+              <span class="button-icon link-icon" aria-hidden="true"></span>
+              <span>Copy page</span>
+            </button>
           </div>
         </div>
 
         <aside class="preview" aria-label="Generated QR">
-          <div id="qr" class="qr" role="img" aria-label="QR code for UPI intent"></div>
+          <div class="qr-shell">
+            <div id="qr" class="qr" role="img" aria-label="QR code for UPI intent"></div>
+          </div>
           <dl class="details">
             <div>
               <dt>Payee</dt>
@@ -46,8 +68,14 @@
             </div>
           </dl>
           <div class="actions preview-actions">
-            <a id="download" class="button secondary" download="upi-qr.svg" href="#">Download SVG</a>
-            <a id="open-upi" class="button primary" href="#">Open UPI</a>
+            <a id="download" class="button quiet-action" download="upi-qr.svg" href="#">
+              <span class="button-icon download-icon" aria-hidden="true"></span>
+              <span>Download</span>
+            </a>
+            <a id="open-upi" class="button danger-action" href="#">
+              <span class="button-icon open-icon" aria-hidden="true"></span>
+              <span>Open UPI</span>
+            </a>
           </div>
         </aside>
       </section>
